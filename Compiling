@@ -1,0 +1,128 @@
+
+
+Cross compiling applications for hummingboard:
+-----------------------------------------------
+Fresh Arch linux installation with Ignition installer:
+cd Donwloads
+mount: check /dev/sdb1 on /media/michael/c2ce4d13-d7dc-487b-908d-aa3d32e1fe0a
+umount /dev/sdb1
+dd bs=4k conv=fsync if=ignition.img of=/dev/sdb
+sudo dd bs=4k conv=fsync if=ignition.img of=/dev/sdb
+
+extend partition to full size with Gparted
+
+Enable sudo:
+Pacman -Syu
+reboot
+Pacman -S sudo
+EDITOR=nano visudo
+
+
+under ## User privilege specification uncomment:
+%wheel ALL=(ALL) ALL
+save
+
+EDITOR=nano visudo
+uncomment:
+## Uncomment to allow members of group sudo to execute any command
+
+# %sudo ALL=(ALL) ALL 
+--------------------------------
+Installing openssh:
+Pacman -S openssh
+if sshd does not start delete all ssh_host* files from cd /etc/ssh with (exampple) rm ssh_host_rsa_key
+Then goto cd /usr/bin/ssh-keygen -A
+systemctl start sshd
+check: systemctl status sshd (should give active running)
+-------------------------------
+
+--------------------------------------------
+Check device ip:
+sudo arp-scan --interface=wlan0 --localnet
+---------------------------------------------
+Create new file:
+(sudo) gedit hello_world_2.c
+
+Compiling:
+arm-linux-gnueabihf-gcc -o hello hello_world_2.c
+
+Compiling hello world on hummingboard works:
+gcc `pkg-config --cflags --libs gstreamer-1.0` gst_hello_world.c -o hello_gst 
+gcc `pkg-config --cflags --libs gstreamer-1.0` gst_testsrc.c -o gst_testsrc
+gcc `pkg-config --cflags --libs gstreamer-1.0` i2c_uart_testsrc.c -o i2c_uart_testsrc
+gcc mpu_6050_read.c -o mpu_6050_read
+
+
+Transfering to target:
+scp hello alarm@192.168.2.8:/home/alarm/apps
+scp i2c_uart_testsrc.c alarm@192.168.2.9:/home/alarm/apps
+
+--------------------------------------------
+Compiling with gstreamer libs:
+
+copy compiled libraries from hummingboard:
+sudo scp -r alarm@192.168.2.7:/usr/include/gstreamer-1.0/gst /home/michael/ArchLinux/gstreamer-1.0
+
+copy .so files to arm-linux-gnueabihf
+sudo scp alarm@192.168.2.7:/usr/lib/libgstreamer-1.0.so /usr/arm-linux-gnueabihf/lib
+sudo scp alarm@192.168.2.7:/usr/lib/libgobject-2.0.so /usr/arm-linux-gnueabihf/lib
+sudo scp alarm@192.168.2.7:/usr/lib/libglib-2.0.so /usr/arm-linux-gnueabihf/lib
+
+
+cd ArchLinux/Programs
+arm-linux-gnueabihf-gcc `pkg-config --cflags --libs gstreamer-1.0` gst_hello_world.c -o hello_gst 
+
+
+---------------------------------------------
+
+Cross compiling kernel:
+get source:
+git clone https://github.com/moonman/linux-imx6-3.14
+
+Or get source from specific branch:
+git clone https://github.com/n-aizu/linux-linaro-stable-mx6 --branch linux-linaro-lsk-v3.14-mx6-misc --single-branch
+
+
+Go to direcory:
+cd linux-imx6-3.14
+
+--------------------------------------------------
+Enable i2c and spi on gpio header:
+Merge dtsi file from i2c tread hummingboard forum and recompile kernel and modules. i2c-dev-2 shows up
+http://forum.solid-run.com/linux-kernel-and-bootloaders-on-cubox-i-and-hummin-f10/controlling-gpios-on-hummingboard-example-t1571-s10.html
+--------------------------------------------------
+
+export ARCH=arm
+export CROSS_COMPILE=/usr/bin/arm-linux-gnueabihf- 
+make imx_v7_cbi_hb_defconfig
+--------------------------------------------------
+Enable CONFIG_MX6_VPU_328M for better video encoder performance
+make menuconfig
+-> Device Drivers  
+  -> MXC support drivers  
+   -> MXC VPU(Video Processing Unit) support  
+    -> Support for MXC VPU(Video Processing Unit) 
+--------------------------------------------------
+make zImage imx6q-cubox-i.dtb imx6dl-cubox-i.dtb imx6dl-hummingboard.dtb imx6q-hummingboard.dtb 
+for extra speed -j2 or -j3
+make -j3 zImage imx6q-cubox-i.dtb imx6dl-cubox-i.dtb imx6dl-hummingboard.dtb imx6q-hummingboard.dtb 
+make -j3 modules
+
+Insert sd card and find mount point:
+
+
+Copy zImage and dtb files to boot folder:
+
+sudo cp arch/arm/boot/zImage  /media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7/boot
+sudo cp arch/arm/boot/dts/imx6q-cubox-i.dtb  /media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7/boot
+sudo cp arch/arm/boot/dts/imx6dl-cubox-i.dtb  /media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7/boot
+sudo cp arch/arm/boot/dts/imx6dl-hummingboard.dtb  /media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7/boot
+sudo cp arch/arm/boot/dts/imx6q-hummingboard.dtb  /media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7/boot
+
+Install modules:
+sudo make ARCH=arm modules_install INSTALL_MOD_PATH=/media/michael/363de5ea-1f30-4d63-8667-e4b9df2591e7
+
+
+
+
+

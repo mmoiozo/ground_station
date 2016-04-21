@@ -1,0 +1,10 @@
+
+
+compiling:
+gcc -o glaround_station ground_ation.c -Wall `pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+
+gcc -o ground_station_2 ground_station.c -Wall `pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+
+:~/Arch/Gladegcc -o glaround_station ground_station.c -Wall `pkg-config --cflags --libs gtk+-3.0` -export-dynamic
+
+gcc sock_client.c -o sock_client

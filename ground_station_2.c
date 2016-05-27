@@ -141,8 +141,8 @@ gboolean time_handler(Widgets *widg) {
 	
    char buffer [20];
    //count = axis[0];
-   int16_t x_com = axis[0]/10; 
-   int16_t y_com = axis[1]/10;
+   int16_t x_com = (axis[0]/10)+300;//was 10 
+   int16_t y_com = axis[1]/10;//was 10
    int16_t t_com = axis[2]/10;
    int16_t r_com = axis[4]/10;
    int16_t chk_sum = 0;

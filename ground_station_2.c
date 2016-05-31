@@ -30,6 +30,9 @@ struct js_event js;
   struct sockaddr_in server;
   unsigned char server_reply[2000];
   unsigned char message[1000];
+   
+  int reconnecting = 0;
+  int recv_fail_count = 0;
   
   //PID gain values
  uint8_t spin_x_p = 0;
@@ -46,6 +49,12 @@ struct js_event js;
  char send_gain = 0;
  char gain_read_back = 0;
  char wait_count = 0;
+ 
+ //Recording control
+ int rec_state_change = 0;
+ int rec_count = 0;
+ int rec_state = 0;
+ char rec_com = 0;
 
  GtkWidget       *open_window;
  
@@ -147,7 +156,7 @@ gboolean time_handler(Widgets *widg) {
    int16_t r_com = axis[4]/10;
    int16_t chk_sum = 0;
    
-   unsigned char x_scaled = (axis[0]/300)+100;
+   //unsigned char x_scaled = (axis[0]/300)+100;
    //unsigned char x_send = (unsigned char)x_scaled;
    sprintf(buffer, "%d",x_com);
    gtk_label_set_label (widg->l5,buffer);
@@ -161,8 +170,18 @@ gboolean time_handler(Widgets *widg) {
    
   // int16_t x_com = axis[0]/100; 
    
+   //optional package increment counter
    cnt++;
    if(cnt>254)cnt=0;
+   
+   //recording control counter
+   if(rec_com != 0 && rec_count < 5)rec_count++;
+   else if(rec_count >= 5)
+   {
+     rec_count = 0;
+     rec_com = 0;
+   }
+   
    
    if(send_gain == 1)
    {
@@ -194,8 +213,8 @@ gboolean time_handler(Widgets *widg) {
    //Send the data
         if( send(sock , message , 16 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
         {
-           // printf("Send failed");
-            return 1;
+            printf("Send failed");
+            //return 1;
         }
    
    }
@@ -215,20 +234,22 @@ gboolean time_handler(Widgets *widg) {
    message[9] = t_com >> 8;
    message[10] = r_com & 0xFF;
    message[11] = r_com >> 8;
+   message[12] = rec_com;//recording control
    
-   for(i = 4;i < 12;i++)
+   for(i = 4;i < 13;i++)
    {
      chk_sum += message[i];
    }
    //printf("chk_sum: %d\n",chk_sum);
-   message[12] = chk_sum & 0xFF;
-   message[13] = chk_sum >> 8;
+   message[13] = chk_sum & 0xFF;
+   message[14] = chk_sum >> 8;
    
    //Send the data
-        if( send(sock , message , 14 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
+        if( send(sock , message , 15 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
         {
-           // printf("Send failed");
-            return 1;
+            printf("Send failed");
+	    recv_fail_count +=1;
+           // return 1;
         }
    
    }
@@ -239,11 +260,20 @@ gboolean time_handler(Widgets *widg) {
         //Receive a reply from the server
         if( recv(sock , server_reply , 2000 , 0) < 0)
         {
-            //printf("recv failed");
+            printf("recv failed");
+	    recv_fail_count +=1;
             //break;
         }
+        else
+	{
+	  recv_fail_count = 0;
+	}
         
-        
+        if(reconnecting == 0 && recv_fail_count > 40)
+	{
+	  socket_reconnect();
+	  recv_fail_count = 0;
+	}
         //puts("Server reply :");
         //puts(server_reply);
         
@@ -275,7 +305,7 @@ gboolean time_handler(Widgets *widg) {
 	int16_t alt = (server_reply[5] << 8) | server_reply[4];
 	int16_t loop_rate = (server_reply[7] << 8) | server_reply[6];
 	int16_t connected = (server_reply[9] << 8) | server_reply[8];
-        printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d\n",x_angle,y_angle,alt,loop_rate,connected);
+        printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n",x_angle,y_angle,alt,loop_rate,connected,rec_com);
    
   
   return TRUE;
@@ -324,6 +354,7 @@ int main(int argc, char *argv[])
   struct timeval tv; 
   int valopt; 
   socklen_t lon; 
+  //int reconnecting = 0;
  
  
  // Trying to connect with timeout 
@@ -517,7 +548,7 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	//gtk_label_set_label (widg->l3,"test");
 	//gtk_label_set_label (widg->l4,"test 2");
 //	gint gtk_spin_button_get_value_as_int( GtkSpinButton *spin_button );
-	gdouble spin_3 = gtk_spin_button_get_value (widg->sx_p);
+	//gdouble spin_3 = gtk_spin_button_get_value (widg->sx_p);
 	spin_x_p = gtk_spin_button_get_value (widg->sx_p);
 	spin_x_i = gtk_spin_button_get_value (widg->sx_i);
 	spin_x_d = gtk_spin_button_get_value (widg->sx_d);
@@ -664,6 +695,131 @@ void on_imagemenuitem2_button_press_event()
 {
   printf( "----------------------\n");
   gtk_widget_show(open_window);
+}
+
+void on_start_recording_button_clicked()
+{
+  if(rec_com == 0)
+  {
+    rec_com = 1;//start recording
+  }
+}
+void on_stop_recording_button_clicked()
+{
+  if(rec_com == 0)
+  {
+    rec_com = 2;//stop recording
+    printf( "STOP----------------------\n");
+  }
+}
+
+void socket_reconnect()
+{
+  int res; 
+  fd_set myset; 
+  struct timeval tv; 
+  int valopt; 
+  socklen_t lon; 
+  
+  printf( "RECONNECTING----------------------\n");
+  
+  reconnecting = 1;
+  //close existing socket
+  close(sock);
+  
+  //Create socket
+    sock = socket(AF_INET , SOCK_STREAM , 0);
+    if (sock == -1)
+    {
+        printf("Could not create socket");
+    }
+    puts("Socket created");
+  
+  /* Set socket to non-blocking */ 
+
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
+    { 
+      puts("F_GETFL error");
+	/* Handle error */ 
+    } 
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
+    { 
+      puts("F_GETFL error");
+	/* Handle error */ 
+    } 
+    
+    
+    server.sin_addr.s_addr = inet_addr("192.168.4.1");
+    server.sin_family = AF_INET;
+    server.sin_port = htons( 80 );
+ /*
+    //Connect to remote server
+    if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
+    {
+        perror("connect failed. Error");
+        return 1;
+    }
+   */
+
+ 
+ 
+ // Trying to connect with timeout 
+  res = connect(sock, (struct sockaddr *)&server, sizeof(server)); 
+  if (res < 0) { 
+     if (errno == EINPROGRESS) { 
+        fprintf(stderr, "EINPROGRESS in connect() - selecting\n"); 
+        do { 
+           tv.tv_sec = 3; 
+           tv.tv_usec = 0; 
+           FD_ZERO(&myset); 
+           FD_SET(sock, &myset); 
+           res = select(sock+1, NULL, &myset, NULL, &tv); 
+           if (res < 0 && errno != EINTR) { 
+              fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
+              //exit(0); 
+           } 
+           else if (res > 0) { 
+              // Socket selected for write 
+              lon = sizeof(int); 
+              if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) { 
+                 fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno)); 
+                // exit(0); 
+              } 
+              // Check the value returned... 
+              if (valopt) { 
+                 fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt) 
+); 
+                 //exit(0); 
+              } 
+              break; 
+           } 
+           else { 
+              fprintf(stderr, "Timeout in select() - Cancelling!\n"); 
+              //exit(0);
+	      break;
+           } 
+        } while (1); 
+     } 
+     else { 
+        fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
+        //exit(0); 
+     } 
+  } 
+  // Set to blocking mode again... 
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
+    { 
+      puts("F_GETFL error");
+	/* Handle error */ 
+    } 
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
+    { 
+      puts("F_GETFL error");
+	/* Handle error */ 
+    } 
+    
+    puts("Connected\n");
+    reconnecting = 0;
+  
 }
 
 

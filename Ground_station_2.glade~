@@ -12,6 +12,16 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
+  <object class="GtkAdjustment" id="adjustment11">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="adjustment12">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
   <object class="GtkAdjustment" id="adjustment2">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
@@ -427,8 +437,8 @@
             <property name="adjustment">adjustment7</property>
           </object>
           <packing>
-            <property name="x">223</property>
-            <property name="y">295</property>
+            <property name="x">109</property>
+            <property name="y">281</property>
           </packing>
         </child>
         <child>
@@ -528,8 +538,8 @@
             <property name="adjustment">adjustment8</property>
           </object>
           <packing>
-            <property name="x">340</property>
-            <property name="y">296</property>
+            <property name="x">223</property>
+            <property name="y">282</property>
           </packing>
         </child>
         <child>
@@ -554,8 +564,8 @@
             <property name="label" translatable="yes">Z  Axis</property>
           </object>
           <packing>
-            <property name="x">172</property>
-            <property name="y">298</property>
+            <property name="x">60</property>
+            <property name="y">283</property>
           </packing>
         </child>
         <child>
@@ -697,17 +707,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkSeparator" id="separator1">
-            <property name="width_request">653</property>
-            <property name="height_request">80</property>
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-          </object>
-          <packing>
-            <property name="y">295</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkLabel" id="label19">
             <property name="width_request">123</property>
             <property name="height_request">80</property>
@@ -743,10 +742,67 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_stop_recording_button_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="x">136</property>
             <property name="y">375</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label9">
+            <property name="width_request">66</property>
+            <property name="height_request">20</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Pitch trim</property>
+          </object>
+          <packing>
+            <property name="x">281</property>
+            <property name="y">351</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label20">
+            <property name="width_request">100</property>
+            <property name="height_request">20</property>
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Roll trim</property>
+          </object>
+          <packing>
+            <property name="x">265</property>
+            <property name="y">386</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSpinButton" id="spinbutton_Pitch_trim">
+            <property name="width_request">104</property>
+            <property name="height_request">29</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="max_length">3</property>
+            <property name="text" translatable="yes">90</property>
+            <property name="adjustment">adjustment11</property>
+          </object>
+          <packing>
+            <property name="x">357</property>
+            <property name="y">347</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSpinButton" id="spinbutton_Roll_trim">
+            <property name="width_request">104</property>
+            <property name="height_request">29</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="max_length">3</property>
+            <property name="text" translatable="yes">90</property>
+            <property name="adjustment">adjustment12</property>
+          </object>
+          <packing>
+            <property name="x">358</property>
+            <property name="y">382</property>
           </packing>
         </child>
       </object>

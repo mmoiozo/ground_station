@@ -46,6 +46,10 @@ struct js_event js;
  uint8_t spin_x_p_o = 0;
  uint8_t spin_y_p_o = 0;
  
+ //trim values
+ uint8_t spin_pitch_trim = 0;
+ uint8_t spin_roll_trim = 0;
+ 
  char send_gain = 0;
  char gain_read_back = 0;
  char wait_count = 0;
@@ -72,6 +76,8 @@ struct _Widgets
    GtkSpinButton *sz_i;
    GtkSpinButton *sx_p_o;
    GtkSpinButton *sy_p_o;
+   GtkSpinButton *s_pitch_trim;
+   GtkSpinButton *s_roll_trim;
    GtkAdjustment *a_x_p;
    GtkAdjustment *a_x_i;
    GtkAdjustment *a_x_d;
@@ -82,6 +88,8 @@ struct _Widgets
    GtkAdjustment *a_z_i;
    GtkAdjustment *a_x_p_o;
    GtkAdjustment *a_y_p_o;
+   GtkAdjustment *a_pitch_trim;
+   GtkAdjustment *a_roll_trim;
    GtkScale *s4;
    GtkLabel *l1;
    GtkLabel *l2;
@@ -150,7 +158,7 @@ gboolean time_handler(Widgets *widg) {
 	
    char buffer [20];
    //count = axis[0];
-   int16_t x_com = (axis[0]/10)+300;//was 10 
+   int16_t x_com = (axis[0]/10);//+300;//was 10 
    int16_t y_com = axis[1]/10;//was 10
    int16_t t_com = axis[2]/10;
    int16_t r_com = axis[4]/10;
@@ -199,19 +207,21 @@ gboolean time_handler(Widgets *widg) {
    message[11] = spin_z_i;
    message[12] = spin_x_p_o;
    message[13] = spin_y_p_o;
+   message[14] = spin_pitch_trim;
+   message[15] = spin_roll_trim;
    
-   for(i = 4;i < 14;i++)
+   for(i = 4;i < 16;i++)
    {
      chk_sum += message[i];
    }
    
-   message[14] = chk_sum & 0xFF;
-   message[15] = chk_sum >> 8;
+   message[16] = chk_sum & 0xFF;
+   message[17] = chk_sum >> 8;
    
    send_gain = 0;
    
    //Send the data
-        if( send(sock , message , 16 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
+        if( send(sock , message , 18 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
         {
             printf("Send failed");
             //return 1;
@@ -281,7 +291,7 @@ gboolean time_handler(Widgets *widg) {
 	{
 	 if(server_reply[0]==spin_x_p&&server_reply[1]==spin_x_i&&server_reply[2]==spin_x_d&&server_reply[3]==spin_y_p
 	   &&server_reply[4]==spin_y_i&&server_reply[5]==spin_y_d&&server_reply[6]==spin_z_p&&server_reply[7]==spin_z_i
-	   &&server_reply[8]==spin_x_p_o&&server_reply[9]==spin_y_p_o)
+	   &&server_reply[8]==spin_x_p_o&&server_reply[9]==spin_y_p_o&&server_reply[10]==spin_pitch_trim&&server_reply[11]==spin_roll_trim)
 	 {
 	   gtk_label_set_label (widg->l16,"read back OK");
 	   gain_read_back = 0;
@@ -465,6 +475,8 @@ int main(int argc, char *argv[])
     widg.sz_i = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonZ_I" ));
     widg.sx_p_o = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_P_outer" ));
     widg.sy_p_o = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_P_outer" ));
+    widg.s_pitch_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Pitch_trim" ));
+    widg.s_roll_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Roll_trim" ));
     
     widg.a_x_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment1" ));
     widg.a_x_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment2" ));
@@ -476,6 +488,8 @@ int main(int argc, char *argv[])
     widg.a_z_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment8" ));
     widg.a_x_p_o = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment9" ));
     widg.a_y_p_o = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment10" ));
+    widg.a_pitch_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment11" ));
+    widg.a_roll_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment12" ));
     
     widg.s4 = GTK_SCALE(gtk_builder_get_object(builder, "scale2" )); 
     widg.l1 = GTK_LABEL(gtk_builder_get_object( builder, "label1" ));
@@ -529,6 +543,14 @@ int main(int argc, char *argv[])
     gtk_spin_button_configure (widg.sy_p_o,widg.a_y_p_o,1,0);
     gtk_spin_button_set_range(widg.sy_p_o,0,256);
     gtk_spin_button_set_update_policy (widg.sy_p_o,GTK_UPDATE_ALWAYS);
+    
+    gtk_spin_button_configure (widg.s_pitch_trim,widg.a_pitch_trim,1,0);
+    gtk_spin_button_set_range(widg.s_pitch_trim,75,105);
+    gtk_spin_button_set_update_policy (widg.s_pitch_trim,GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure (widg.s_roll_trim,widg.a_roll_trim,1,0);
+    gtk_spin_button_set_range(widg.s_roll_trim,75,105);
+    gtk_spin_button_set_update_policy (widg.s_roll_trim,GTK_UPDATE_ALWAYS);
+
 
     gtk_widget_show(window);
     gtk_main();
@@ -559,6 +581,8 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	spin_z_i = gtk_spin_button_get_value (widg->sz_i);
 	spin_x_p_o = gtk_spin_button_get_value (widg->sx_p_o);
 	spin_y_p_o = gtk_spin_button_get_value (widg->sy_p_o);
+	spin_pitch_trim = gtk_spin_button_get_value (widg->s_pitch_trim);
+	spin_roll_trim = gtk_spin_button_get_value (widg->s_roll_trim);
 	
 	printf( "----------------------\n");
 	printf( "spin x_p  %d\n",spin_x_p );
@@ -571,6 +595,8 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	printf( "spin z_i  %d\n",spin_z_i );
 	printf( "spin x_p_o  %d\n",spin_x_p_o );
 	printf( "spin y_p_o  %d\n",spin_y_p_o );
+	printf( "spin pitch_trim  %d\n",spin_pitch_trim );
+	printf( "spin roll_trim  %d\n",spin_roll_trim );
 	
 	send_gain = 1;
 	gain_read_back = 1;//gain read back waiting state 1
@@ -621,8 +647,8 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
         if (fp == NULL) {
             printf("I couldn't open results.dat for appending.\n");
         }
-        char buffer[10];
-        fread(buffer, 10, 1, fp);
+        char buffer[12];
+        fread(buffer, 12, 1, fp);
         gtk_spin_button_set_value (widg->sx_p,buffer[0]);
 	gtk_spin_button_set_value (widg->sx_i,buffer[1]);
 	gtk_spin_button_set_value (widg->sx_d,buffer[2]);
@@ -633,6 +659,8 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 	gtk_spin_button_set_value (widg->sz_i,buffer[7]);
 	gtk_spin_button_set_value (widg->sx_p_o,buffer[8]);
 	gtk_spin_button_set_value (widg->sy_p_o,buffer[9]);
+	gtk_spin_button_set_value (widg->s_pitch_trim,buffer[10]);
+	gtk_spin_button_set_value (widg->s_roll_trim,buffer[11]);
         /* close the file */
         fclose(fp);
   gtk_widget_hide(open_window);
@@ -651,6 +679,8 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	spin_z_i = gtk_spin_button_get_value (widg->sz_i);
 	spin_x_p_o = gtk_spin_button_get_value (widg->sx_p_o);
 	spin_y_p_o = gtk_spin_button_get_value (widg->sy_p_o);
+	spin_pitch_trim = gtk_spin_button_get_value (widg->s_pitch_trim);
+	spin_roll_trim = gtk_spin_button_get_value (widg->s_roll_trim);
 	
 	printf( "Saved----------------------\n");
 	printf( "spin x_p  %d\n",spin_x_p );
@@ -663,6 +693,8 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	printf( "spin z_i  %d\n",spin_z_i );
 	printf( "spin x_p_o  %d\n",spin_x_p_o );
 	printf( "spin y_p_o  %d\n",spin_y_p_o );
+	printf( "spin pitch_trim  %d\n",spin_pitch_trim );
+	printf( "spin roll_trim  %d\n",spin_roll_trim );
 	
 	FILE *fp;
    
@@ -672,7 +704,7 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
             printf("I couldn't open results.dat for appending.\n");
         }
         
-        char str[10] = {spin_x_p,spin_x_i,spin_x_d,spin_y_p,spin_y_i,spin_y_d,spin_z_p,spin_z_i,spin_x_p_o,spin_y_p_o};
+        char str[12] = {spin_x_p,spin_x_i,spin_x_d,spin_y_p,spin_y_i,spin_y_d,spin_z_p,spin_z_i,spin_x_p_o,spin_y_p_o,spin_pitch_trim,spin_roll_trim};
     
         /* write to the file */
         //fprintf(fp, "------5-------------------------------------------------------\n");
@@ -702,6 +734,7 @@ void on_start_recording_button_clicked()
   if(rec_com == 0)
   {
     rec_com = 1;//start recording
+    printf( "START----------------------\n");
   }
 }
 void on_stop_recording_button_clicked()

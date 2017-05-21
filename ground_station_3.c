@@ -273,17 +273,18 @@ gboolean time_handler(Widgets *widg)
 	int32_t in_buffer[30];
 	n = recvfrom(s, server_reply, BUF_SIZE, 0, (struct sockaddr*)&server, &len);
 	if (n > 0) {
-		printf("Received from %s:%d: ",
-		       inet_ntoa(server.sin_addr),
-		       ntohs(server.sin_port));
+		// printf("Received from %s:%d: ",
+		//        inet_ntoa(server.sin_addr),
+		//        ntohs(server.sin_port));
+
 		//fflush(stdout);
 		// write(1, buf, n);
 		// write(1, "\n", 1);
 
 		//convert from uint8_t to int32_t
-		memcpy(in_buffer, server_reply, len);
+		memcpy(in_buffer, server_reply, 80);
 
-		printf("echo_count[0]=%d\n", in_buffer[0]);
+		//printf("echo_count[0]=%d\n", in_buffer[0]);
 		//break;
 		recv_fail_count = 0;
 	}else
@@ -315,14 +316,37 @@ gboolean time_handler(Widgets *widg)
 
 	}
 
-	int16_t x_angle = (server_reply[1] << 8) | server_reply[0];
-	int16_t y_angle = (server_reply[3] << 8) | server_reply[2];
-	int16_t alt = (server_reply[5] << 8) | server_reply[4];
-	int16_t loop_rate = (server_reply[7] << 8) | server_reply[6];
-	int16_t connected = (server_reply[9] << 8) | server_reply[8];
-	printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n", x_angle, y_angle, alt, loop_rate, connected, rec_com);
+	// int16_t x_angle = (server_reply[1] << 8) | server_reply[0];
+	// int16_t y_angle = (server_reply[3] << 8) | server_reply[2];
+	// int16_t alt = (server_reply[5] << 8) | server_reply[4];
+	// int16_t loop_rate = (server_reply[7] << 8) | server_reply[6];
+	// int16_t connected = (server_reply[9] << 8) | server_reply[8];
+	//printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n", x_angle, y_angle, alt, loop_rate, connected, rec_com);
 
+    float send_factor = 100000;
+    if(in_buffer[19]==1243){
+        float Angle_x = ((float)in_buffer[0]) / send_factor;
+    	float Angle_y = ((float)in_buffer[1]) / send_factor;
+    	float Az = ((float)in_buffer[2]) / send_factor;
+    	float p = ((float)in_buffer[3]) / send_factor;
+    	float q = ((float)in_buffer[4]) / send_factor;
+    	float r = ((float)in_buffer[5]) / send_factor;
+    	float temp = ((float)in_buffer[6]) / send_factor;
 
+    	float debug_apps_1 = ((float)in_buffer[7]) / send_factor;
+    	float debug_apps_2 = ((float)in_buffer[8]) / send_factor;
+    	float debug_apps_3 = ((float)in_buffer[9]) / send_factor;
+    	float debug_apps_4 = ((float)in_buffer[10]) / send_factor;
+    	float debug_apps_5 = ((float)in_buffer[11]) / send_factor;
+    	float debug_apps_6 = ((float)in_buffer[12]) / send_factor;
+    	float debug_apps_7 = ((float)in_buffer[13]) / send_factor;
+    	float debug_apps_8 = ((float)in_buffer[14]) / send_factor;
+    	float debug_apps_9 = ((float)in_buffer[15]) / send_factor;
+    	float debug_apps_10 = ((float)in_buffer[16]) / send_factor;
+
+        printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
+        printf("Debug_1:%f\nDebug_2:%f\nDebug_3:%f\nDebug_4:%f\n",debug_apps_1,debug_apps_2,debug_apps_3,debug_apps_4);
+    }
 	return TRUE;
 }
 

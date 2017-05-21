@@ -30,10 +30,10 @@ struct js_event js;
   struct sockaddr_in server;
   unsigned char server_reply[2000];
   unsigned char message[1000];
-   
+
   int reconnecting = 0;
   int recv_fail_count = 0;
-  
+
   //PID gain values
  uint8_t spin_x_p = 0;
  uint8_t spin_x_i = 0;
@@ -45,15 +45,15 @@ struct js_event js;
  uint8_t spin_z_i = 0;
  uint8_t spin_x_p_o = 0;
  uint8_t spin_y_p_o = 0;
- 
+
  //trim values
  uint8_t spin_pitch_trim = 0;
  uint8_t spin_roll_trim = 0;
- 
+
  char send_gain = 0;
  char gain_read_back = 0;
  char wait_count = 0;
- 
+
  //Recording control
  int rec_state_change = 0;
  int rec_count = 0;
@@ -61,7 +61,7 @@ struct js_event js;
  char rec_com = 0;
 
  GtkWidget       *open_window;
- 
+
 struct _Widgets
 {
    GtkEntry *e1;
@@ -105,7 +105,7 @@ struct _Widgets
 };
 
 gboolean time_handler(Widgets *widg) {
-  
+
   /*
   int bytes = 1;
 
@@ -125,7 +125,7 @@ gboolean time_handler(Widgets *widg) {
 				break;
 		}
 		*/
-  
+
 		   while (read(joy_fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
 			  /*
 				printf("Event: type %d, time %d, number %d, value %d\n",
@@ -155,15 +155,15 @@ gboolean time_handler(Widgets *widg) {
 */
 			fflush(stdout);
 		   }
-	
+
    char buffer [20];
    //count = axis[0];
-   int16_t x_com = (axis[0]/10);//+300;//was 10 
+   int16_t x_com = (axis[0]/10);//+300;//was 10
    int16_t y_com = axis[1]/10;//was 10
    int16_t t_com = axis[2]/10;
    int16_t r_com = axis[4]/10;
    int16_t chk_sum = 0;
-   
+
    //unsigned char x_scaled = (axis[0]/300)+100;
    //unsigned char x_send = (unsigned char)x_scaled;
    sprintf(buffer, "%d",x_com);
@@ -175,13 +175,13 @@ gboolean time_handler(Widgets *widg) {
    sprintf(buffer, "%d",r_com);
    gtk_label_set_label (widg->l8,buffer);
    //count++;
-   
-  // int16_t x_com = axis[0]/100; 
-   
+
+  // int16_t x_com = axis[0]/100;
+
    //optional package increment counter
    cnt++;
    if(cnt>254)cnt=0;
-   
+
    //recording control counter
    if(rec_com != 0 && rec_count < 5)rec_count++;
    else if(rec_count >= 5)
@@ -189,8 +189,8 @@ gboolean time_handler(Widgets *widg) {
      rec_count = 0;
      rec_com = 0;
    }
-   
-   
+
+
    if(send_gain == 1)
    {
    message[0] = 133;//preamble
@@ -209,24 +209,24 @@ gboolean time_handler(Widgets *widg) {
    message[13] = spin_y_p_o;
    message[14] = spin_pitch_trim;
    message[15] = spin_roll_trim;
-   
+
    for(i = 4;i < 16;i++)
    {
      chk_sum += message[i];
    }
-   
+
    message[16] = chk_sum & 0xFF;
    message[17] = chk_sum >> 8;
-   
+
    send_gain = 0;
-   
+
    //Send the data
         if( send(sock , message , 18 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
         {
             printf("Send failed");
             //return 1;
         }
-   
+
    }
    else
    {
@@ -245,7 +245,7 @@ gboolean time_handler(Widgets *widg) {
    message[10] = r_com & 0xFF;
    message[11] = r_com >> 8;
    message[12] = rec_com;//recording control
-   
+
    for(i = 4;i < 13;i++)
    {
      chk_sum += message[i];
@@ -253,7 +253,7 @@ gboolean time_handler(Widgets *widg) {
    //printf("chk_sum: %d\n",chk_sum);
    message[13] = chk_sum & 0xFF;
    message[14] = chk_sum >> 8;
-   
+
    //Send the data
         if( send(sock , message , 15 , 0) < 0)//if( send(sock , message , strlen(message) , 0) < 0)
         {
@@ -261,12 +261,12 @@ gboolean time_handler(Widgets *widg) {
 	    recv_fail_count +=1;
            // return 1;
         }
-   
+
    }
 
         usleep(10000);
-	
-	
+
+
         //Receive a reply from the server
         if( recv(sock , server_reply , 2000 , 0) < 0)
         {
@@ -278,7 +278,7 @@ gboolean time_handler(Widgets *widg) {
 	{
 	  recv_fail_count = 0;
 	}
-        
+
         if(reconnecting == 0 && recv_fail_count > 40)
 	{
 	  socket_reconnect();
@@ -286,7 +286,7 @@ gboolean time_handler(Widgets *widg) {
 	}
         //puts("Server reply :");
         //puts(server_reply);
-        
+
         if(gain_read_back == 1)
 	{
 	 if(server_reply[0]==spin_x_p&&server_reply[1]==spin_x_i&&server_reply[2]==spin_x_d&&server_reply[3]==spin_y_p
@@ -296,10 +296,10 @@ gboolean time_handler(Widgets *widg) {
 	   gtk_label_set_label (widg->l16,"read back OK");
 	   gain_read_back = 0;
 	 }
-	 
+
 	 printf("x_p: %d x_i: %d x_d: %d y_p: %d y_i: %d y_d: %d z_p: %d z_i: %d x_p_o: %d y_p_o: %d\n",server_reply[0],server_reply[1],server_reply[2],
 	server_reply[3],server_reply[4],server_reply[5],server_reply[6],server_reply[7],server_reply[8],server_reply[9]);
-	 
+
 	 wait_count +=1;
 	 if(wait_count > 5)
 	 {
@@ -307,24 +307,24 @@ gboolean time_handler(Widgets *widg) {
 	   gain_read_back = 0;
 	   wait_count = 0;
 	 }
-	 
+
 	}
-        
+
         int16_t x_angle = (server_reply[1] << 8) | server_reply[0];
         int16_t y_angle = (server_reply[3] << 8) | server_reply[2];
 	int16_t alt = (server_reply[5] << 8) | server_reply[4];
 	int16_t loop_rate = (server_reply[7] << 8) | server_reply[6];
 	int16_t connected = (server_reply[9] << 8) | server_reply[8];
         printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n",x_angle,y_angle,alt,loop_rate,connected,rec_com);
-   
-  
+
+
   return TRUE;
 }
 
 int main(int argc, char *argv[])
 {
-  
-     
+
+
     //Create socket
     sock = socket(AF_INET , SOCK_STREAM , 0);
     if (sock == -1)
@@ -332,24 +332,24 @@ int main(int argc, char *argv[])
         printf("Could not create socket");
     }
     puts("Socket created");
-     
-    /* Set socket to non-blocking */ 
 
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
-    { 
+    /* Set socket to non-blocking */
+
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
-    { 
+	/* Handle error */
+    }
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    
-    
-    server.sin_addr.s_addr = inet_addr("192.168.4.1");
+	/* Handle error */
+    }
+
+
+    server.sin_addr.s_addr = inet_addr("192.168.1.1");
     server.sin_family = AF_INET;
-    server.sin_port = htons( 80 );
+    server.sin_port = htons( 5004 );
  /*
     //Connect to remote server
     if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0)
@@ -358,76 +358,76 @@ int main(int argc, char *argv[])
         return 1;
     }
    */
- 
-  int res; 
-  fd_set myset; 
-  struct timeval tv; 
-  int valopt; 
-  socklen_t lon; 
+
+  int res;
+  fd_set myset;
+  struct timeval tv;
+  int valopt;
+  socklen_t lon;
   //int reconnecting = 0;
- 
- 
- // Trying to connect with timeout 
-  res = connect(sock, (struct sockaddr *)&server, sizeof(server)); 
-  if (res < 0) { 
-     if (errno == EINPROGRESS) { 
-        fprintf(stderr, "EINPROGRESS in connect() - selecting\n"); 
-        do { 
-           tv.tv_sec = 15; 
-           tv.tv_usec = 0; 
-           FD_ZERO(&myset); 
-           FD_SET(sock, &myset); 
-           res = select(sock+1, NULL, &myset, NULL, &tv); 
-           if (res < 0 && errno != EINTR) { 
-              fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
-              exit(0); 
-           } 
-           else if (res > 0) { 
-              // Socket selected for write 
-              lon = sizeof(int); 
-              if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) { 
-                 fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno)); 
-                 exit(0); 
-              } 
-              // Check the value returned... 
-              if (valopt) { 
-                 fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt) 
-); 
-                 exit(0); 
-              } 
-              break; 
-           } 
-           else { 
-              fprintf(stderr, "Timeout in select() - Cancelling!\n"); 
+
+
+ // Trying to connect with timeout
+  res = connect(sock, (struct sockaddr *)&server, sizeof(server));
+  if (res < 0) {
+     if (errno == EINPROGRESS) {
+        fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+        do {
+           tv.tv_sec = 15;
+           tv.tv_usec = 0;
+           FD_ZERO(&myset);
+           FD_SET(sock, &myset);
+           res = select(sock+1, NULL, &myset, NULL, &tv);
+           if (res < 0 && errno != EINTR) {
+              fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+              exit(0);
+           }
+           else if (res > 0) {
+              // Socket selected for write
+              lon = sizeof(int);
+              if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+                 fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+                 exit(0);
+              }
+              // Check the value returned...
+              if (valopt) {
+                 fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
+);
+                 exit(0);
+              }
+              break;
+           }
+           else {
+              fprintf(stderr, "Timeout in select() - Cancelling!\n");
               //exit(0);
 	      break;
-           } 
-        } while (1); 
-     } 
-     else { 
-        fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
-        exit(0); 
-     } 
-  } 
-  // Set to blocking mode again... 
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
-    { 
+           }
+        } while (1);
+     }
+     else {
+        fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+        exit(0);
+     }
+  }
+  // Set to blocking mode again...
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
-    { 
+	/* Handle error */
+    }
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-  
+	/* Handle error */
+    }
 
- 
+
+
     puts("Connected\n");
-     
+
     //int i = 0;
   //-------------------------------------------------------------------------------------
-  
+
   //joystick
 
 
@@ -451,9 +451,9 @@ int main(int argc, char *argv[])
 
   fcntl( joy_fd, F_SETFL, O_NONBLOCK );	/* use non-blocking mode */
 
-  
-  
-    GtkBuilder      *builder; 
+
+
+    GtkBuilder      *builder;
     GtkWidget       *window;
     Widgets     widg;
 
@@ -464,7 +464,7 @@ int main(int argc, char *argv[])
 
     window = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
     open_window = GTK_WIDGET(gtk_builder_get_object(builder, "filechooserdialog1"));
-    //widg.e1 = GTK_ENTRY(gtk_builder_get_object(builder, "entry1" )); 
+    //widg.e1 = GTK_ENTRY(gtk_builder_get_object(builder, "entry1" ));
     widg.sx_p = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_P" ));
     widg.sx_i = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_I" ));
     widg.sx_d = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_D" ));
@@ -477,7 +477,7 @@ int main(int argc, char *argv[])
     widg.sy_p_o = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_P_outer" ));
     widg.s_pitch_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Pitch_trim" ));
     widg.s_roll_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Roll_trim" ));
-    
+
     widg.a_x_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment1" ));
     widg.a_x_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment2" ));
     widg.a_x_d = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment3" ));
@@ -490,8 +490,8 @@ int main(int argc, char *argv[])
     widg.a_y_p_o = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment10" ));
     widg.a_pitch_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment11" ));
     widg.a_roll_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment12" ));
-    
-    widg.s4 = GTK_SCALE(gtk_builder_get_object(builder, "scale2" )); 
+
+    widg.s4 = GTK_SCALE(gtk_builder_get_object(builder, "scale2" ));
     widg.l1 = GTK_LABEL(gtk_builder_get_object( builder, "label1" ));
     widg.l2 = GTK_LABEL(gtk_builder_get_object( builder, "label2" ));
     widg.l3 = GTK_LABEL(gtk_builder_get_object( builder, "label3" ));
@@ -505,11 +505,11 @@ int main(int argc, char *argv[])
     gtk_builder_connect_signals(builder, &widg);
 
     g_object_unref(builder);
-    
+
     g_timeout_add(50, (GSourceFunc) time_handler, &widg);//was 100
-    
+
     //widg.a_x = gtk_spin_button_get_adjustment (widg.sx_p);
-    
+
     gtk_spin_button_configure (widg.sx_p,widg.a_x_p,1,0);
     gtk_spin_button_set_range(widg.sx_p,0,256);
     gtk_spin_button_set_update_policy (widg.sx_p,GTK_UPDATE_ALWAYS);
@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
     gtk_spin_button_configure (widg.sx_d,widg.a_x_d,1,0);
     gtk_spin_button_set_range(widg.sx_d,0,256);
     gtk_spin_button_set_update_policy (widg.sx_d,GTK_UPDATE_ALWAYS);
-    
+
     gtk_spin_button_configure (widg.sy_p,widg.a_y_p,1,0);
     gtk_spin_button_set_range(widg.sy_p,0,256);
     gtk_spin_button_set_update_policy (widg.sy_p,GTK_UPDATE_ALWAYS);
@@ -529,21 +529,21 @@ int main(int argc, char *argv[])
     gtk_spin_button_configure (widg.sy_d,widg.a_y_d,1,0);
     gtk_spin_button_set_range(widg.sy_d,0,256);
     gtk_spin_button_set_update_policy (widg.sy_d,GTK_UPDATE_ALWAYS);
-    
+
      gtk_spin_button_configure (widg.sz_p,widg.a_z_p,1,0);
     gtk_spin_button_set_range(widg.sz_p,0,256);
     gtk_spin_button_set_update_policy (widg.sz_p,GTK_UPDATE_ALWAYS);
     gtk_spin_button_configure (widg.sz_i,widg.a_z_i,1,0);
     gtk_spin_button_set_range(widg.sz_i,0,256);
     gtk_spin_button_set_update_policy (widg.sz_i,GTK_UPDATE_ALWAYS);
-    
+
     gtk_spin_button_configure (widg.sx_p_o,widg.a_x_p_o,1,0);
     gtk_spin_button_set_range(widg.sx_p_o,0,256);
     gtk_spin_button_set_update_policy (widg.sx_p_o,GTK_UPDATE_ALWAYS);
     gtk_spin_button_configure (widg.sy_p_o,widg.a_y_p_o,1,0);
     gtk_spin_button_set_range(widg.sy_p_o,0,256);
     gtk_spin_button_set_update_policy (widg.sy_p_o,GTK_UPDATE_ALWAYS);
-    
+
     gtk_spin_button_configure (widg.s_pitch_trim,widg.a_pitch_trim,1,0);
     gtk_spin_button_set_range(widg.s_pitch_trim,75,105);
     gtk_spin_button_set_update_policy (widg.s_pitch_trim,GTK_UPDATE_ALWAYS);
@@ -554,7 +554,7 @@ int main(int argc, char *argv[])
 
     gtk_widget_show(window);
     gtk_main();
-    
+
     return 0;
 }
 
@@ -583,7 +583,7 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	spin_y_p_o = gtk_spin_button_get_value (widg->sy_p_o);
 	spin_pitch_trim = gtk_spin_button_get_value (widg->s_pitch_trim);
 	spin_roll_trim = gtk_spin_button_get_value (widg->s_roll_trim);
-	
+
 	printf( "----------------------\n");
 	printf( "spin x_p  %d\n",spin_x_p );
 	printf( "spin x_i  %d\n",spin_x_i );
@@ -597,23 +597,23 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	printf( "spin y_p_o  %d\n",spin_y_p_o );
 	printf( "spin pitch_trim  %d\n",spin_pitch_trim );
 	printf( "spin roll_trim  %d\n",spin_roll_trim );
-	
+
 	send_gain = 1;
 	gain_read_back = 1;//gain read back waiting state 1
 	gtk_label_set_label (widg->l16,"waiting");
-	
+
 	/*
-	
+
 	FILE *fp;
-   
-        // open the file 
+
+        // open the file
         fp = fopen("log.txt", "r+");
         if (fp == NULL) {
             printf("I couldn't open results.dat for appending.\n");
         }
-        
+
         char str[8] = {spin_x_p,spin_x_i,spin_x_d,spin_y_p,spin_y_i,spin_y_d,spin_z_p,spin_z_i};
-    
+
         // write to the file /
         //fprintf(fp, "------5-------------------------------------------------------\n");
 	fwrite(str , 1 , sizeof(str) , fp );
@@ -641,7 +641,7 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
   printf("%s\n", gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(open_window)));
   gchar * filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(open_window));
   FILE *fp;
-   
+
         /* open the file */
         fp = fopen(filename, "r+");
         if (fp == NULL) {
@@ -681,7 +681,7 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	spin_y_p_o = gtk_spin_button_get_value (widg->sy_p_o);
 	spin_pitch_trim = gtk_spin_button_get_value (widg->s_pitch_trim);
 	spin_roll_trim = gtk_spin_button_get_value (widg->s_roll_trim);
-	
+
 	printf( "Saved----------------------\n");
 	printf( "spin x_p  %d\n",spin_x_p );
 	printf( "spin x_i  %d\n",spin_x_i );
@@ -695,23 +695,23 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	printf( "spin y_p_o  %d\n",spin_y_p_o );
 	printf( "spin pitch_trim  %d\n",spin_pitch_trim );
 	printf( "spin roll_trim  %d\n",spin_roll_trim );
-	
+
 	FILE *fp;
-   
+
         /* open the file */
         fp = fopen("log.txt", "r+");
         if (fp == NULL) {
             printf("I couldn't open results.dat for appending.\n");
         }
-        
+
         char str[12] = {spin_x_p,spin_x_i,spin_x_d,spin_y_p,spin_y_i,spin_y_d,spin_z_p,spin_z_i,spin_x_p_o,spin_y_p_o,spin_pitch_trim,spin_roll_trim};
-    
+
         /* write to the file */
         //fprintf(fp, "------5-------------------------------------------------------\n");
 	fwrite(str , 1 , sizeof(str) , fp );
         /* close the file */
         fclose(fp);
-	
+
 	//gtk_widget_show(open_window);
 }
 
@@ -748,18 +748,18 @@ void on_stop_recording_button_clicked()
 
 void socket_reconnect()
 {
-  int res; 
-  fd_set myset; 
-  struct timeval tv; 
-  int valopt; 
-  socklen_t lon; 
-  
+  int res;
+  fd_set myset;
+  struct timeval tv;
+  int valopt;
+  socklen_t lon;
+
   printf( "RECONNECTING----------------------\n");
-  
+
   reconnecting = 1;
   //close existing socket
   close(sock);
-  
+
   //Create socket
     sock = socket(AF_INET , SOCK_STREAM , 0);
     if (sock == -1)
@@ -767,21 +767,21 @@ void socket_reconnect()
         printf("Could not create socket");
     }
     puts("Socket created");
-  
-  /* Set socket to non-blocking */ 
 
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
-    { 
+  /* Set socket to non-blocking */
+
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
-    { 
+	/* Handle error */
+    }
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    
-    
+	/* Handle error */
+    }
+
+
     server.sin_addr.s_addr = inet_addr("192.168.4.1");
     server.sin_family = AF_INET;
     server.sin_port = htons( 80 );
@@ -794,65 +794,63 @@ void socket_reconnect()
     }
    */
 
- 
- 
- // Trying to connect with timeout 
-  res = connect(sock, (struct sockaddr *)&server, sizeof(server)); 
-  if (res < 0) { 
-     if (errno == EINPROGRESS) { 
-        fprintf(stderr, "EINPROGRESS in connect() - selecting\n"); 
-        do { 
-           tv.tv_sec = 3; 
-           tv.tv_usec = 0; 
-           FD_ZERO(&myset); 
-           FD_SET(sock, &myset); 
-           res = select(sock+1, NULL, &myset, NULL, &tv); 
-           if (res < 0 && errno != EINTR) { 
-              fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
-              //exit(0); 
-           } 
-           else if (res > 0) { 
-              // Socket selected for write 
-              lon = sizeof(int); 
-              if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) { 
-                 fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno)); 
-                // exit(0); 
-              } 
-              // Check the value returned... 
-              if (valopt) { 
-                 fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt) 
-); 
-                 //exit(0); 
-              } 
-              break; 
-           } 
-           else { 
-              fprintf(stderr, "Timeout in select() - Cancelling!\n"); 
+
+
+ // Trying to connect with timeout
+  res = connect(sock, (struct sockaddr *)&server, sizeof(server));
+  if (res < 0) {
+     if (errno == EINPROGRESS) {
+        fprintf(stderr, "EINPROGRESS in connect() - selecting\n");
+        do {
+           tv.tv_sec = 3;
+           tv.tv_usec = 0;
+           FD_ZERO(&myset);
+           FD_SET(sock, &myset);
+           res = select(sock+1, NULL, &myset, NULL, &tv);
+           if (res < 0 && errno != EINTR) {
+              fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+              //exit(0);
+           }
+           else if (res > 0) {
+              // Socket selected for write
+              lon = sizeof(int);
+              if (getsockopt(sock, SOL_SOCKET, SO_ERROR, (void*)(&valopt), &lon) < 0) {
+                 fprintf(stderr, "Error in getsockopt() %d - %s\n", errno, strerror(errno));
+                // exit(0);
+              }
+              // Check the value returned...
+              if (valopt) {
+                 fprintf(stderr, "Error in delayed connection() %d - %s\n", valopt, strerror(valopt)
+);
+                 //exit(0);
+              }
+              break;
+           }
+           else {
+              fprintf(stderr, "Timeout in select() - Cancelling!\n");
               //exit(0);
 	      break;
-           } 
-        } while (1); 
-     } 
-     else { 
-        fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno)); 
-        //exit(0); 
-     } 
-  } 
-  // Set to blocking mode again... 
-    if ((flags = fcntl(sock, F_GETFL, 0)) < 0) 
-    { 
+           }
+        } while (1);
+     }
+     else {
+        fprintf(stderr, "Error connecting %d - %s\n", errno, strerror(errno));
+        //exit(0);
+     }
+  }
+  // Set to blocking mode again...
+    if ((flags = fcntl(sock, F_GETFL, 0)) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0) 
-    { 
+	/* Handle error */
+    }
+    if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
       puts("F_GETFL error");
-	/* Handle error */ 
-    } 
-    
+	/* Handle error */
+    }
+
     puts("Connected\n");
     reconnecting = 0;
-  
+
 }
-
-

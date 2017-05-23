@@ -345,7 +345,8 @@ gboolean time_handler(Widgets *widg)
     	float debug_apps_10 = ((float)in_buffer[16]) / send_factor;
 
         printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
-        printf("Debug_1:%f\nDebug_2:%f\nDebug_3:%f\nDebug_4:%f\n",debug_apps_1,debug_apps_2,debug_apps_3,debug_apps_4);
+        printf("Debug_1:%f\nDebug_2:%f\nDebug_3:%f\nDebug_4:%f\nDebug_5:%f\nDebug_6:%f\n",
+        debug_apps_1,debug_apps_2,debug_apps_3,debug_apps_4,debug_apps_5,debug_apps_6);
     }
 	return TRUE;
 }

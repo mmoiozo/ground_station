@@ -344,10 +344,9 @@ gboolean time_handler(Widgets *widg)
     	float debug_apps_9 = ((float)in_buffer[15]) / send_factor;
     	float debug_apps_10 = ((float)in_buffer[16]) / send_factor;
 
-        //printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
-        printf("--------------------------------------------------------------------\n");
-        printf("cmd_Pitch:%f\natt_Theta:%f\ncmd_Roll:%f\natt_Phi:%f\ni_cmd_Pitch:%f\ni_cmd_roll:%f\nThrottle:%f\nPitch_act:%f\nRoll_act:%f\nfail_Safe:%f\n",
-        debug_apps_1*57.3,debug_apps_2*57.3,debug_apps_3*57.3,debug_apps_4*57.3,debug_apps_5,debug_apps_6,debug_apps_7,debug_apps_8,debug_apps_9,debug_apps_10);
+        printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
+        printf("Debug_1:%f\nDebug_2:%f\nDebug_3:%f\nDebug_4:%f\nDebug_5:%f\nDebug_6:%f\n",
+        debug_apps_1,debug_apps_2,debug_apps_3,debug_apps_4,debug_apps_5,debug_apps_6);
     }
 	return TRUE;
 }
@@ -395,7 +394,7 @@ int main(int argc, char *argv[])
 
 	if (( joy_fd = open( JOY_DEV, O_RDONLY)) == -1 ) {
 		printf( "Couldn't open joystick\n" );
-		return -1;
+		//return -1;
 	}
 
 	ioctl( joy_fd, JSIOCGAXES, &num_of_axis );
@@ -421,7 +420,7 @@ int main(int argc, char *argv[])
 	gtk_init(&argc, &argv);
 
 	builder = gtk_builder_new();
-	gtk_builder_add_from_file(builder, "Ground_station_2.glade", NULL);
+	gtk_builder_add_from_file(builder, "Ground_station_4.glade", NULL);
 
 	window = GTK_WIDGET(gtk_builder_get_object(builder, "window1"));
 	open_window = GTK_WIDGET(gtk_builder_get_object(builder, "filechooserdialog1"));
@@ -609,6 +608,20 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 		printf("I couldn't open results.dat for appending.\n");
 	uint8_t buffer[12];
 	fread(buffer, 12, 1, fp);
+    printf( "Loaded----------------------\n");
+	printf( "spin x_p  %d\n", buffer[0] );
+	printf( "spin x_i  %d\n", buffer[1] );
+	printf( "spin x_d  %d\n", buffer[2] );
+	printf( "spin y_p  %d\n", buffer[3] );
+	printf( "spin y_i  %d\n", buffer[4] );
+	printf( "spin y_d  %d\n", buffer[5] );
+	printf( "spin z_p  %d\n", buffer[6] );
+	printf( "spin z_i  %d\n", buffer[7] );
+	printf( "spin x_p_o  %d\n", buffer[8] );
+	printf( "spin y_p_o  %d\n", buffer[9] );
+	printf( "spin pitch_trim  %d\n", buffer[10] );
+	printf( "spin roll_trim  %d\n", buffer[11] );
+
 	gtk_spin_button_set_value(widg->sx_p, buffer[0]);
 	gtk_spin_button_set_value(widg->sx_i, buffer[1]);
 	gtk_spin_button_set_value(widg->sx_d, buffer[2]);
@@ -659,7 +672,7 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	FILE *fp;
 
 	/* open the file */
-	fp = fopen("log.txt", "r+");
+	fp = fopen("CONTROL_GAINS.txt", "r+");
 	if (fp == NULL)
 		printf("I couldn't open results.dat for appending.\n");
 

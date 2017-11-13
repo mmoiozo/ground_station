@@ -89,6 +89,15 @@ struct _Widgets {
 	GtkSpinButton *sy_p_o;
 	GtkSpinButton *s_pitch_trim;
 	GtkSpinButton *s_roll_trim;
+    GtkSpinButton *speed_x_p;
+    GtkSpinButton *speed_x_i;
+    GtkSpinButton *speed_x_d;
+    GtkSpinButton *speed_y_p;
+    GtkSpinButton *speed_y_i;
+    GtkSpinButton *speed_y_d;
+    GtkSpinButton *speed_z_p;
+    GtkSpinButton *speed_z_i;
+    GtkSpinButton *speed_z_nt;
 	GtkAdjustment *a_x_p;
 	GtkAdjustment *a_x_i;
 	GtkAdjustment *a_x_d;
@@ -101,6 +110,15 @@ struct _Widgets {
 	GtkAdjustment *a_y_p_o;
 	GtkAdjustment *a_pitch_trim;
 	GtkAdjustment *a_roll_trim;
+    GtkAdjustment *a_speed_x_p;
+    GtkAdjustment *a_speed_x_i;
+    GtkAdjustment *a_speed_x_d;
+    GtkAdjustment *a_speed_y_p;
+    GtkAdjustment *a_speed_y_i;
+    GtkAdjustment *a_speed_y_d;
+    GtkAdjustment *a_speed_z_p;
+    GtkAdjustment *a_speed_z_i;
+    GtkAdjustment *a_speed_z_nt;
 	GtkScale *s4;
 	GtkLabel *l1;
 	GtkLabel *l2;
@@ -437,6 +455,15 @@ int main(int argc, char *argv[])
 	widg.sy_p_o = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_P_outer" ));
 	widg.s_pitch_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Pitch_trim" ));
 	widg.s_roll_trim = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbutton_Roll_trim" ));
+    widg.speed_x_p = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_SPEED_P" ));
+    widg.speed_x_i = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_SPEED_I" ));
+    widg.speed_x_d = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonX_SPEED_D" ));
+    widg.speed_y_p = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_SPEED_P" ));
+    widg.speed_y_i = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_SPEED_I" ));
+    widg.speed_y_d = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonY_SPEED_D" ));
+    widg.speed_z_p = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonZ_SPEED_P" ));
+    widg.speed_z_i = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonZ_SPEED_I" ));
+    widg.speed_z_nt = GTK_SPIN_BUTTON(gtk_builder_get_object(builder, "spinbuttonZ_SPEED_NT" ));
 
 	widg.a_x_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment1" ));
 	widg.a_x_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment2" ));
@@ -450,6 +477,15 @@ int main(int argc, char *argv[])
 	widg.a_y_p_o = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment10" ));
 	widg.a_pitch_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment11" ));
 	widg.a_roll_trim = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment12" ));
+    widg.a_speed_x_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment13" ));
+	widg.a_speed_x_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment14" ));
+	widg.a_speed_x_d = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment15" ));
+	widg.a_speed_y_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment16" ));
+	widg.a_speed_y_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment17" ));
+	widg.a_speed_y_d = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment18" ));
+	widg.a_speed_z_p = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment19" ));
+	widg.a_speed_z_i = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment20" ));
+    widg.a_speed_z_nt = GTK_ADJUSTMENT(gtk_builder_get_object(builder, "adjustment21" ));
 
 	widg.s4 = GTK_SCALE(gtk_builder_get_object(builder, "scale2" ));
 	widg.l1 = GTK_LABEL(gtk_builder_get_object( builder, "label1" ));

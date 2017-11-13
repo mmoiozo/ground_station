@@ -72,6 +72,25 @@ int rec_count = 0;
 int rec_state = 0;
 char rec_com = 0;
 
+const uint8_t CRC7_POLY = 0x91;
+
+uint8_t getCRC(uint8_t message[], int length)
+{
+  uint8_t i, j, crc = 0;
+
+  for (i = 0; i < length; i++)
+  {
+    crc ^= message[i];
+    for (j = 0; j < 8; j++)
+    {
+      if (crc & 1)
+        crc ^= CRC7_POLY;
+      crc >>= 1;
+    }
+  }
+  return crc;
+}
+
 GtkWidget       *open_window;
 
 struct _Widgets {
@@ -243,7 +262,11 @@ gboolean time_handler(Widgets *widg)
 		out_buffer[3] = y_com;  //y_com;
 		out_buffer[4] = r_com;  //r_com;
 		out_buffer[5] = t_com;
-		out_buffer[6] = -142;
+        memcpy(message, out_buffer, 6*4);
+        uint8_t checksum_crc = getCRC(message,6*4);
+        //printf("checksum_crc:%d\n",checksum_crc);
+        out_buffer[6] = (int32_t)checksum_crc;
+		// out_buffer[6] = -142;
 
 		int send_length = 7 * sizeof(int32_t);
 		//printf("send_length%d\n",send_length);
@@ -251,7 +274,7 @@ gboolean time_handler(Widgets *widg)
 
 		//Send the data
 		/* send message */
-		if (sendto(s, message, 28, 0, (struct sockaddr*)&server, len) == -1) {
+		if (sendto(s, message, send_length, 0, (struct sockaddr*)&server, len) == -1) {
 			perror("sendto()");
 			printf("Send failed");
 			recv_fail_count += 1;
@@ -272,8 +295,9 @@ gboolean time_handler(Widgets *widg)
 	// }
 	int32_t in_buffer[30];
 	n = recvfrom(s, server_reply, BUF_SIZE, 0, (struct sockaddr*)&server, &len);
+    //printf("n:%d\n"n);
 	if (n > 0) {
-		// printf("Received from %s:%d: ",
+		// printf("Received from %s:%d: \n",
 		//        inet_ntoa(server.sin_addr),
 		//        ntohs(server.sin_port));
 
@@ -282,7 +306,7 @@ gboolean time_handler(Widgets *widg)
 		// write(1, "\n", 1);
 
 		//convert from uint8_t to int32_t
-		memcpy(in_buffer, server_reply, 80);
+		memcpy(in_buffer, server_reply, 120);
 
 		//printf("echo_count[0]=%d\n", in_buffer[0]);
 		//break;
@@ -324,7 +348,7 @@ gboolean time_handler(Widgets *widg)
 	//printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n", x_angle, y_angle, alt, loop_rate, connected, rec_com);
 
     float send_factor = 100000;
-    if(in_buffer[19]==1243){
+    if(in_buffer[29]<255){
         float Angle_x = ((float)in_buffer[0]) / send_factor;
     	float Angle_y = ((float)in_buffer[1]) / send_factor;
     	float Az = ((float)in_buffer[2]) / send_factor;
@@ -343,11 +367,23 @@ gboolean time_handler(Widgets *widg)
     	float debug_apps_8 = ((float)in_buffer[14]) / send_factor;
     	float debug_apps_9 = ((float)in_buffer[15]) / send_factor;
     	float debug_apps_10 = ((float)in_buffer[16]) / send_factor;
+        float debug_apps_11 = ((float)in_buffer[17]) / send_factor;
+    	float debug_apps_12 = ((float)in_buffer[18]) / send_factor;
+    	float debug_apps_13 = ((float)in_buffer[19]) / send_factor;
+    	float debug_apps_14 = ((float)in_buffer[20]) / send_factor;
+    	float debug_apps_15 = ((float)in_buffer[21]) / send_factor;
+    	float debug_apps_16 = ((float)in_buffer[22]) / send_factor;
+    	float debug_apps_17 = ((float)in_buffer[23]) / send_factor;
+    	float debug_apps_18 = ((float)in_buffer[24]) / send_factor;
+    	float debug_apps_19 = ((float)in_buffer[25]) / send_factor;
+    	float debug_apps_20 = ((float)in_buffer[26]) / send_factor;
 
         //printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
         printf("--------------------------------------------------------------------\n");
         printf("cmd_Pitch:%f\natt_Theta:%f\ncmd_Roll:%f\natt_Phi:%f\ni_cmd_Pitch:%f\ni_cmd_roll:%f\nThrottle:%f\nPitch_act:%f\nRoll_act:%f\nfail_Safe:%f\n",
         debug_apps_1*57.3,debug_apps_2*57.3,debug_apps_3*57.3,debug_apps_4*57.3,debug_apps_5,debug_apps_6,debug_apps_7,debug_apps_8,debug_apps_9,debug_apps_10);
+        printf("acc_filter_x_70:%f\nacc_filter_y_70:%f\nacc_filter_z_70:%f\n",debug_apps_11,debug_apps_12,debug_apps_13);
+        printf("acc_filter_x_90:%f\nacc_filter_y_90:%f\nacc_filter_z_90:%f\n",debug_apps_14,debug_apps_15,debug_apps_16);
     }
 	return TRUE;
 }

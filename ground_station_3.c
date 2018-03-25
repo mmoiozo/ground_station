@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
 
 	if (( joy_fd = open( JOY_DEV, O_RDONLY)) == -1 ) {
 		printf( "Couldn't open joystick\n" );
-		return -1;
+		//return -1;
 	}
 
 	ioctl( joy_fd, JSIOCGAXES, &num_of_axis );
@@ -541,11 +541,12 @@ int main(int argc, char *argv[])
 	gtk_spin_button_set_range(widg.sy_p_o, 0, 256);
 	gtk_spin_button_set_update_policy(widg.sy_p_o, GTK_UPDATE_ALWAYS);
 
-	gtk_spin_button_configure(widg.s_pitch_trim, widg.a_pitch_trim, 1, 0);
-	gtk_spin_button_set_range(widg.s_pitch_trim, 75, 105);
+	gtk_spin_button_configure(widg.s_pitch_trim, widg.a_pitch_trim, 0.1, 2);
+	gtk_spin_button_set_range(widg.s_pitch_trim, -20.0, 20.0);
 	gtk_spin_button_set_update_policy(widg.s_pitch_trim, GTK_UPDATE_ALWAYS);
-	gtk_spin_button_configure(widg.s_roll_trim, widg.a_roll_trim, 1, 0);
-	gtk_spin_button_set_range(widg.s_roll_trim, 75, 105);
+    //gtk_spin_button_set_increments (widg.s_pitch_trim,0.1,0.1);
+	gtk_spin_button_configure(widg.s_roll_trim, widg.a_roll_trim, 0.1, 2);
+	gtk_spin_button_set_range(widg.s_roll_trim, -20, 20);
 	gtk_spin_button_set_update_policy(widg.s_roll_trim, GTK_UPDATE_ALWAYS);
 
 

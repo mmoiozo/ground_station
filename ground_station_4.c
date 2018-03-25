@@ -13,8 +13,11 @@
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <netdb.h>
+#include <math.h>
 
 #define JOY_DEV "/dev/input/js0"
+
+#define TRIM_RANGE 15.0 //maximum trim angle compensation
 
 typedef struct _Widgets Widgets;
 
@@ -61,6 +64,19 @@ uint8_t spin_y_p_o = 0;
 //trim values
 uint8_t spin_pitch_trim = 0;
 uint8_t spin_roll_trim = 0;
+float pitch_trim_val = 0;
+float roll_trim_val = 0;
+
+//PID gain values speed
+uint8_t spin_speed_x_p = 0;
+uint8_t spin_speed_x_i = 0;
+uint8_t spin_speed_x_d = 0;
+uint8_t spin_speed_y_p = 0;
+uint8_t spin_speed_y_i = 0;
+uint8_t spin_speed_y_d = 0;
+uint8_t spin_speed_z_p = 0;
+uint8_t spin_speed_z_i = 0;
+uint8_t spin_speed_z_nt = 0;
 
 char send_gain = 0;
 char gain_read_back = 0;
@@ -71,6 +87,25 @@ int rec_state_change = 0;
 int rec_count = 0;
 int rec_state = 0;
 char rec_com = 0;
+
+const uint8_t CRC7_POLY = 0x91;
+
+uint8_t getCRC(uint8_t message[], int length)
+{
+  uint8_t i, j, crc = 0;
+
+  for (i = 0; i < length; i++)
+  {
+    crc ^= message[i];
+    for (j = 0; j < 8; j++)
+    {
+      if (crc & 1)
+        crc ^= CRC7_POLY;
+      crc >>= 1;
+    }
+  }
+  return crc;
+}
 
 GtkWidget       *open_window;
 
@@ -260,8 +295,12 @@ gboolean time_handler(Widgets *widg)
 		out_buffer[2] = x_com;  //x_com;
 		out_buffer[3] = y_com;  //y_com;
 		out_buffer[4] = r_com;  //r_com;
-		out_buffer[5] = t_com;
-		out_buffer[6] = -142;
+        out_buffer[5] = t_com;
+        memcpy(message, out_buffer, 6*4);
+        uint8_t checksum_crc = getCRC(message,6*4);
+        //printf("checksum_crc:%d\n",checksum_crc);
+        out_buffer[6] = (int32_t)checksum_crc;
+		// out_buffer[6] = -142;
 
 		int send_length = 7 * sizeof(int32_t);
 		//printf("send_length%d\n",send_length);
@@ -269,7 +308,7 @@ gboolean time_handler(Widgets *widg)
 
 		//Send the data
 		/* send message */
-		if (sendto(s, message, 28, 0, (struct sockaddr*)&server, len) == -1) {
+		if (sendto(s, message, send_length, 0, (struct sockaddr*)&server, len) == -1) {
 			perror("sendto()");
 			printf("Send failed");
 			recv_fail_count += 1;
@@ -300,7 +339,7 @@ gboolean time_handler(Widgets *widg)
 		// write(1, "\n", 1);
 
 		//convert from uint8_t to int32_t
-		memcpy(in_buffer, server_reply, 80);
+		memcpy(in_buffer, server_reply, 120);
 
 		//printf("echo_count[0]=%d\n", in_buffer[0]);
 		//break;
@@ -322,8 +361,8 @@ gboolean time_handler(Widgets *widg)
 			gain_read_back = 0;
 		}
 
-		printf("x_p: %d x_i: %d x_d: %d y_p: %d y_i: %d y_d: %d z_p: %d z_i: %d x_p_o: %d y_p_o: %d\n", server_reply[0], server_reply[1], server_reply[2],
-		       server_reply[3], server_reply[4], server_reply[5], server_reply[6], server_reply[7], server_reply[8], server_reply[9]);
+		printf("x_p: %d x_i: %d x_d: %d y_p: %d y_i: %d y_d: %d z_p: %d z_i: %d x_p_o: %d y_p_o: %d  trim_pitch: %d trim_roll: %d\n", server_reply[0], server_reply[1], server_reply[2],
+		       server_reply[3], server_reply[4], server_reply[5], server_reply[6], server_reply[7], server_reply[8], server_reply[9],server_reply[10], server_reply[11]);
 
 		wait_count += 1;
 		if (wait_count > 5) {
@@ -342,7 +381,7 @@ gboolean time_handler(Widgets *widg)
 	//printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n", x_angle, y_angle, alt, loop_rate, connected, rec_com);
 
     float send_factor = 100000;
-    if(in_buffer[19]==1243){
+    if(in_buffer[29]<255){
         float Angle_x = ((float)in_buffer[0]) / send_factor;
     	float Angle_y = ((float)in_buffer[1]) / send_factor;
     	float Az = ((float)in_buffer[2]) / send_factor;
@@ -361,10 +400,24 @@ gboolean time_handler(Widgets *widg)
     	float debug_apps_8 = ((float)in_buffer[14]) / send_factor;
     	float debug_apps_9 = ((float)in_buffer[15]) / send_factor;
     	float debug_apps_10 = ((float)in_buffer[16]) / send_factor;
+        float debug_apps_11 = ((float)in_buffer[17]) / send_factor;
+    	float debug_apps_12 = ((float)in_buffer[18]) / send_factor;
+    	float debug_apps_13 = ((float)in_buffer[19]) / send_factor;
+    	float debug_apps_14 = ((float)in_buffer[20]) / send_factor;
+    	float debug_apps_15 = ((float)in_buffer[21]) / send_factor;
+    	float debug_apps_16 = ((float)in_buffer[22]) / send_factor;
+    	float debug_apps_17 = ((float)in_buffer[23]) / send_factor;
+    	float debug_apps_18 = ((float)in_buffer[24]) / send_factor;
+    	float debug_apps_19 = ((float)in_buffer[25]) / send_factor;
+    	float debug_apps_20 = ((float)in_buffer[26]) / send_factor;
 
-        printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
-        printf("Debug_1:%f\nDebug_2:%f\nDebug_3:%f\nDebug_4:%f\nDebug_5:%f\nDebug_6:%f\n",
-        debug_apps_1,debug_apps_2,debug_apps_3,debug_apps_4,debug_apps_5,debug_apps_6);
+        //printf("Angle_x:%f Angle_y:%f \n",Angle_x, Angle_y);
+        printf("--------------------------------------------------------------------\n");
+        printf("cmd_Pitch:%f\natt_Theta:%f\ncmd_Roll:%f\natt_Phi:%f\ni_cmd_Pitch:%f\ni_cmd_roll:%f\nThrottle:%f\nPitch_act:%f\nRoll_act:%f\nfail_Safe:%f\n",
+        debug_apps_1*57.3,debug_apps_2*57.3,debug_apps_3*57.3,debug_apps_4*57.3,debug_apps_5,debug_apps_6,debug_apps_7,debug_apps_8,debug_apps_9,debug_apps_10);
+        printf("acc_filter_x_70:%f\nacc_filter_y_70:%f\nacc_filter_z_70:%f\n",debug_apps_11,debug_apps_12,debug_apps_13);
+        printf("acc_filter_x_90:%f\nacc_filter_y_90:%f\nacc_filter_z_90:%f\n",debug_apps_14,debug_apps_15,debug_apps_16);
+        printf("Sonar range:%f\n",debug_apps_17);
     }
 	return TRUE;
 }
@@ -507,45 +560,75 @@ int main(int argc, char *argv[])
 	//widg.a_x = gtk_spin_button_get_adjustment (widg.sx_p);
 
 	gtk_spin_button_configure(widg.sx_p, widg.a_x_p, 1, 0);
-	gtk_spin_button_set_range(widg.sx_p, 0, 256);
+	gtk_spin_button_set_range(widg.sx_p, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sx_p, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sx_i, widg.a_x_i, 1, 0);
-	gtk_spin_button_set_range(widg.sx_i, 0, 256);
+	gtk_spin_button_set_range(widg.sx_i, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sx_i, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sx_d, widg.a_x_d, 1, 0);
-	gtk_spin_button_set_range(widg.sx_d, 0, 256);
+	gtk_spin_button_set_range(widg.sx_d, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sx_d, GTK_UPDATE_ALWAYS);
 
 	gtk_spin_button_configure(widg.sy_p, widg.a_y_p, 1, 0);
-	gtk_spin_button_set_range(widg.sy_p, 0, 256);
+	gtk_spin_button_set_range(widg.sy_p, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sy_p, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sy_i, widg.a_y_i, 1, 0);
-	gtk_spin_button_set_range(widg.sy_i, 0, 256);
+	gtk_spin_button_set_range(widg.sy_i, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sy_i, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sy_d, widg.a_y_d, 1, 0);
-	gtk_spin_button_set_range(widg.sy_d, 0, 256);
+	gtk_spin_button_set_range(widg.sy_d, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sy_d, GTK_UPDATE_ALWAYS);
 
 	gtk_spin_button_configure(widg.sz_p, widg.a_z_p, 1, 0);
-	gtk_spin_button_set_range(widg.sz_p, 0, 256);
+	gtk_spin_button_set_range(widg.sz_p, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sz_p, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sz_i, widg.a_z_i, 1, 0);
-	gtk_spin_button_set_range(widg.sz_i, 0, 256);
+	gtk_spin_button_set_range(widg.sz_i, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sz_i, GTK_UPDATE_ALWAYS);
 
 	gtk_spin_button_configure(widg.sx_p_o, widg.a_x_p_o, 1, 0);
-	gtk_spin_button_set_range(widg.sx_p_o, 0, 256);
+	gtk_spin_button_set_range(widg.sx_p_o, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sx_p_o, GTK_UPDATE_ALWAYS);
 	gtk_spin_button_configure(widg.sy_p_o, widg.a_y_p_o, 1, 0);
-	gtk_spin_button_set_range(widg.sy_p_o, 0, 256);
+	gtk_spin_button_set_range(widg.sy_p_o, 0, 254);
 	gtk_spin_button_set_update_policy(widg.sy_p_o, GTK_UPDATE_ALWAYS);
 
-	gtk_spin_button_configure(widg.s_pitch_trim, widg.a_pitch_trim, 1, 0);
-	gtk_spin_button_set_range(widg.s_pitch_trim, 75, 105);
+	gtk_spin_button_configure(widg.s_pitch_trim, widg.a_pitch_trim, 0.1, 2);
+	gtk_spin_button_set_range(widg.s_pitch_trim, -TRIM_RANGE, TRIM_RANGE);
 	gtk_spin_button_set_update_policy(widg.s_pitch_trim, GTK_UPDATE_ALWAYS);
-	gtk_spin_button_configure(widg.s_roll_trim, widg.a_roll_trim, 1, 0);
-	gtk_spin_button_set_range(widg.s_roll_trim, 75, 105);
+	gtk_spin_button_configure(widg.s_roll_trim, widg.a_roll_trim, 0.1, 2);
+	gtk_spin_button_set_range(widg.s_roll_trim, -TRIM_RANGE, TRIM_RANGE);
 	gtk_spin_button_set_update_policy(widg.s_roll_trim, GTK_UPDATE_ALWAYS);
+
+    gtk_spin_button_configure(widg.speed_x_p, widg.a_speed_x_p, 1, 0);
+	gtk_spin_button_set_range(widg.speed_x_p, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_x_p, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_x_i, widg.a_speed_x_i, 1, 0);
+	gtk_spin_button_set_range(widg.speed_x_i, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_x_i, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_x_d, widg.a_speed_x_d, 1, 0);
+	gtk_spin_button_set_range(widg.speed_x_d, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_x_d, GTK_UPDATE_ALWAYS);
+
+    gtk_spin_button_configure(widg.speed_y_p, widg.a_speed_y_p, 1, 0);
+	gtk_spin_button_set_range(widg.speed_y_p, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_x_p, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_y_i, widg.a_speed_y_i, 1, 0);
+	gtk_spin_button_set_range(widg.speed_y_i, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_y_i, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_y_d, widg.a_speed_y_d, 1, 0);
+	gtk_spin_button_set_range(widg.speed_y_d, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_y_d, GTK_UPDATE_ALWAYS);
+
+    gtk_spin_button_configure(widg.speed_z_p, widg.a_speed_z_p, 1, 0);
+	gtk_spin_button_set_range(widg.speed_z_p, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_z_p, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_z_i, widg.a_speed_z_i, 1, 0);
+	gtk_spin_button_set_range(widg.speed_z_i, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_z_i, GTK_UPDATE_ALWAYS);
+    gtk_spin_button_configure(widg.speed_z_nt, widg.a_speed_z_nt, 1, 0);
+	gtk_spin_button_set_range(widg.speed_z_nt, 0, 254);
+	gtk_spin_button_set_update_policy(widg.speed_z_nt, GTK_UPDATE_ALWAYS);
 
 
 	gtk_widget_show(window);
@@ -559,6 +642,18 @@ void on_window1_destroy()
 {
 	gtk_main_quit();
 }
+
+//
+uint8_t f_2_i8(float f){
+    float factor = (2*TRIM_RANGE)/250;
+    return (uint8_t)((f/factor)+125);
+}
+
+float  i8_2_f(uint8_t i_){
+    float factor = (2*TRIM_RANGE)/250;
+    return (float)(i_)*factor-TRIM_RANGE;
+}
+
 
 //button
 void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
@@ -577,8 +672,10 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	spin_z_i = gtk_spin_button_get_value(widg->sz_i);
 	spin_x_p_o = gtk_spin_button_get_value(widg->sx_p_o);
 	spin_y_p_o = gtk_spin_button_get_value(widg->sy_p_o);
-	spin_pitch_trim = gtk_spin_button_get_value(widg->s_pitch_trim);
-	spin_roll_trim = gtk_spin_button_get_value(widg->s_roll_trim);
+	pitch_trim_val = gtk_spin_button_get_value(widg->s_pitch_trim);
+	roll_trim_val = gtk_spin_button_get_value(widg->s_roll_trim);
+    spin_pitch_trim = f_2_i8(pitch_trim_val);
+    spin_roll_trim = f_2_i8(roll_trim_val);
 
 	printf( "----------------------\n");
 	printf( "spin x_p  %d\n", spin_x_p );
@@ -591,8 +688,12 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	printf( "spin z_i  %d\n", spin_z_i );
 	printf( "spin x_p_o  %d\n", spin_x_p_o );
 	printf( "spin y_p_o  %d\n", spin_y_p_o );
-	printf( "spin pitch_trim  %d\n", spin_pitch_trim );
-	printf( "spin roll_trim  %d\n", spin_roll_trim );
+    printf( "pitch_trim_val  %f\n", pitch_trim_val );
+	printf( "roll_trim_val  %f\n", roll_trim_val );
+    printf( "spin_pitch_trim int  %d\n", spin_pitch_trim );
+	printf( "spin_roll_trim  int %d\n", spin_roll_trim );
+	printf( "spin_pitch_trim  %f\n", i8_2_f(spin_pitch_trim) );
+	printf( "spin_roll_trim  %f\n", i8_2_f(spin_roll_trim) );
 
 	send_gain = 1;
 	gain_read_back = 1; //gain read back waiting state 1
@@ -655,8 +756,10 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 	printf( "spin z_i  %d\n", buffer[7] );
 	printf( "spin x_p_o  %d\n", buffer[8] );
 	printf( "spin y_p_o  %d\n", buffer[9] );
-	printf( "spin pitch_trim  %d\n", buffer[10] );
+    printf( "spin pitch_trim  %d\n", buffer[10] );
 	printf( "spin roll_trim  %d\n", buffer[11] );
+	printf( "pitch_trim_val  %f\n", i8_2_f(buffer[10]) );
+	printf( "roll_trim_val  %f\n", i8_2_f(buffer[11]) );
 
 	gtk_spin_button_set_value(widg->sx_p, buffer[0]);
 	gtk_spin_button_set_value(widg->sx_i, buffer[1]);
@@ -668,8 +771,8 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 	gtk_spin_button_set_value(widg->sz_i, buffer[7]);
 	gtk_spin_button_set_value(widg->sx_p_o, buffer[8]);
 	gtk_spin_button_set_value(widg->sy_p_o, buffer[9]);
-	gtk_spin_button_set_value(widg->s_pitch_trim, buffer[10]);
-	gtk_spin_button_set_value(widg->s_roll_trim, buffer[11]);
+	gtk_spin_button_set_value(widg->s_pitch_trim, i8_2_f(buffer[10]));
+	gtk_spin_button_set_value(widg->s_roll_trim, i8_2_f(buffer[11]));
 	/* close the file */
 	fclose(fp);
 	gtk_widget_hide(open_window);
@@ -688,8 +791,10 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	spin_z_i = gtk_spin_button_get_value(widg->sz_i);
 	spin_x_p_o = gtk_spin_button_get_value(widg->sx_p_o);
 	spin_y_p_o = gtk_spin_button_get_value(widg->sy_p_o);
-	spin_pitch_trim = gtk_spin_button_get_value(widg->s_pitch_trim);
-	spin_roll_trim = gtk_spin_button_get_value(widg->s_roll_trim);
+	pitch_trim_val = gtk_spin_button_get_value(widg->s_pitch_trim);
+	roll_trim_val = gtk_spin_button_get_value(widg->s_roll_trim);
+    spin_pitch_trim = f_2_i8(pitch_trim_val);
+    spin_roll_trim = f_2_i8(roll_trim_val);
 
 	printf( "Saved----------------------\n");
 	printf( "spin x_p  %d\n", spin_x_p );
@@ -702,8 +807,10 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	printf( "spin z_i  %d\n", spin_z_i );
 	printf( "spin x_p_o  %d\n", spin_x_p_o );
 	printf( "spin y_p_o  %d\n", spin_y_p_o );
-	printf( "spin pitch_trim  %d\n", spin_pitch_trim );
-	printf( "spin roll_trim  %d\n", spin_roll_trim );
+	printf( "pitch_trim_val  %f\n", pitch_trim_val );
+	printf( "roll_trim_val  %f\n", roll_trim_val );
+    printf( "spin_pitch_trim  %d\n", spin_pitch_trim );
+	printf( "spin_roll_trim  %d\n", spin_roll_trim );
 
 	FILE *fp;
 

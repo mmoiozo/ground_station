@@ -14,46 +14,46 @@
   </object>
   <object class="GtkAdjustment" id="adjustment11">
     <property name="upper">100</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.050000000000000003</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment12">
     <property name="upper">100</property>
-    <property name="step_increment">1</property>
+    <property name="step_increment">0.050000000000000003</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment13">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment14">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment15">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment16">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment17">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment18">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment19">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -63,12 +63,12 @@
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment20">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
   <object class="GtkAdjustment" id="adjustment21">
-    <property name="upper">100</property>
+    <property name="upper">254</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -494,7 +494,6 @@
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
             <property name="adjustment">adjustment1</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">222</property>
@@ -826,9 +825,10 @@
             <property name="height_request">29</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="max_length">3</property>
+            <property name="max_length">6</property>
             <property name="text" translatable="yes">90</property>
             <property name="adjustment">adjustment11</property>
+            <property name="digits">2</property>
           </object>
           <packing>
             <property name="x">357</property>
@@ -841,9 +841,10 @@
             <property name="height_request">29</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
-            <property name="max_length">3</property>
+            <property name="max_length">6</property>
             <property name="text" translatable="yes">90</property>
             <property name="adjustment">adjustment12</property>
+            <property name="digits">2</property>
           </object>
           <packing>
             <property name="x">355</property>
@@ -857,9 +858,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment13</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">224</property>
@@ -873,9 +873,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment16</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">224</property>
@@ -889,9 +888,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment19</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">225</property>
@@ -944,9 +942,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment14</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">336</property>
@@ -960,9 +957,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment17</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">336</property>
@@ -976,9 +972,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment20</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">338</property>
@@ -992,9 +987,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment15</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">452</property>
@@ -1008,9 +1002,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment18</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">451</property>
@@ -1024,9 +1017,8 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="max_length">4</property>
-            <property name="text" translatable="yes">1</property>
+            <property name="text" translatable="yes">0</property>
             <property name="adjustment">adjustment21</property>
-            <property name="value">1</property>
           </object>
           <packing>
             <property name="x">449</property>

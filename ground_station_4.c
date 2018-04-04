@@ -380,7 +380,7 @@ gboolean time_handler(Widgets *widg)
 	// int16_t connected = (server_reply[9] << 8) | server_reply[8];
 	//printf("x_angle: %d y_angle: %d altitude: %d loop_rate: %d connected %d recording control: %d\n", x_angle, y_angle, alt, loop_rate, connected, rec_com);
 
-    float send_factor = 100000;
+    float send_factor = 1000;//was100000;
     if(in_buffer[29]<255){
         float Angle_x = ((float)in_buffer[0]) / send_factor;
     	float Angle_y = ((float)in_buffer[1]) / send_factor;
@@ -418,6 +418,7 @@ gboolean time_handler(Widgets *widg)
         printf("acc_filter_x_70:%f\nacc_filter_y_70:%f\nacc_filter_z_70:%f\n",debug_apps_11,debug_apps_12,debug_apps_13);
         printf("acc_filter_x_90:%f\nacc_filter_y_90:%f\nacc_filter_z_90:%f\n",debug_apps_14,debug_apps_15,debug_apps_16);
         printf("Sonar range:%f\n",debug_apps_17);
+        printf("Sonar minimum range:%f\n",debug_apps_18);
     }
 	return TRUE;
 }
@@ -677,6 +678,17 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
     spin_pitch_trim = f_2_i8(pitch_trim_val);
     spin_roll_trim = f_2_i8(roll_trim_val);
 
+    spin_speed_x_p = gtk_spin_button_get_value(widg->speed_x_p);
+    spin_speed_x_i = gtk_spin_button_get_value(widg->speed_x_i);
+    spin_speed_x_d = gtk_spin_button_get_value(widg->speed_x_d);
+    spin_speed_y_p = gtk_spin_button_get_value(widg->speed_y_p);
+    spin_speed_y_i = gtk_spin_button_get_value(widg->speed_y_i);
+    spin_speed_y_d = gtk_spin_button_get_value(widg->speed_y_d);
+    spin_speed_z_p = gtk_spin_button_get_value(widg->speed_z_p);
+    spin_speed_z_i = gtk_spin_button_get_value(widg->speed_z_i);
+    spin_speed_z_nt = gtk_spin_button_get_value(widg->speed_z_nt);
+
+
 	printf( "----------------------\n");
 	printf( "spin x_p  %d\n", spin_x_p );
 	printf( "spin x_i  %d\n", spin_x_i );
@@ -694,6 +706,16 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 	printf( "spin_roll_trim  int %d\n", spin_roll_trim );
 	printf( "spin_pitch_trim  %f\n", i8_2_f(spin_pitch_trim) );
 	printf( "spin_roll_trim  %f\n", i8_2_f(spin_roll_trim) );
+
+    printf( "spin_speed_x_p  int %d\n", spin_speed_x_p );
+    printf( "spin_speed_x_i  int %d\n", spin_speed_x_i );
+    printf( "spin_speed_x_d  int %d\n", spin_speed_x_d );
+    printf( "spin_speed_y_p  int %d\n", spin_speed_y_p );
+    printf( "spin_speed_y_i  int %d\n", spin_speed_y_i );
+    printf( "spin_speed_y_d  int %d\n", spin_speed_y_d );
+    printf( "spin_speed_z_p  int %d\n", spin_speed_z_p );
+    printf( "spin_speed_z_i  int %d\n", spin_speed_z_i );
+    printf( "spin_speed_z_nt  int %d\n", spin_speed_z_nt);
 
 	send_gain = 1;
 	gain_read_back = 1; //gain read back waiting state 1
@@ -735,16 +757,21 @@ void on_button1_clicked( GtkButton *button, Widgets *widg, gpointer window)
 void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 {
 	printf( "----------------------\n");
-	printf("%s\n", gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(open_window)));
+    gchar * name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(open_window));
+	printf("name:%s\n", name);
 	gchar * filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(open_window));
 	FILE *fp;
 
 	/* open the file */
-	fp = fopen(filename, "r+");
-	if (fp == NULL)
-		printf("I couldn't open results.dat for appending.\n");
-	uint8_t buffer[12];
-	fread(buffer, 12, 1, fp);
+    uint8_t buffer[21] = {0};
+    printf("filename%s\n",filename );
+    if(filename != NULL){
+        printf("fopen\n");
+        fp = fopen(filename, "r+");
+    	if (fp == NULL)
+    		printf("I couldn't open results.dat for appending.\n");
+    	fread(buffer, 21, 1, fp);
+    }
     printf( "Loaded----------------------\n");
 	printf( "spin x_p  %d\n", buffer[0] );
 	printf( "spin x_i  %d\n", buffer[1] );
@@ -761,6 +788,16 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 	printf( "pitch_trim_val  %f\n", i8_2_f(buffer[10]) );
 	printf( "roll_trim_val  %f\n", i8_2_f(buffer[11]) );
 
+    printf( "spin_speed_x_p  int %d\n", buffer[12] );
+    printf( "spin_speed_x_i  int %d\n", buffer[13] );
+    printf( "spin_speed_x_d  int %d\n", buffer[14] );
+    printf( "spin_speed_y_p  int %d\n", buffer[15] );
+    printf( "spin_speed_y_i  int %d\n", buffer[16] );
+    printf( "spin_speed_y_d  int %d\n", buffer[17] );
+    printf( "spin_speed_z_p  int %d\n", buffer[18] );
+    printf( "spin_speed_z_i  int %d\n", buffer[19] );
+    printf( "spin_speed_z_nt  int %d\n", buffer[20]);
+
 	gtk_spin_button_set_value(widg->sx_p, buffer[0]);
 	gtk_spin_button_set_value(widg->sx_i, buffer[1]);
 	gtk_spin_button_set_value(widg->sx_d, buffer[2]);
@@ -773,10 +810,22 @@ void on_open_clicked(GtkButton *button, Widgets *widg, gpointer window)
 	gtk_spin_button_set_value(widg->sy_p_o, buffer[9]);
 	gtk_spin_button_set_value(widg->s_pitch_trim, i8_2_f(buffer[10]));
 	gtk_spin_button_set_value(widg->s_roll_trim, i8_2_f(buffer[11]));
+
+    gtk_spin_button_set_value(widg->speed_x_p, buffer[12]);
+    gtk_spin_button_set_value(widg->speed_x_i, buffer[13]);
+    gtk_spin_button_set_value(widg->speed_x_d, buffer[14]);
+    gtk_spin_button_set_value(widg->speed_y_p, buffer[15]);
+    gtk_spin_button_set_value(widg->speed_y_i, buffer[16]);
+    gtk_spin_button_set_value(widg->speed_y_d, buffer[17]);
+    gtk_spin_button_set_value(widg->speed_z_p, buffer[18]);
+    gtk_spin_button_set_value(widg->speed_z_i, buffer[19]);
+    gtk_spin_button_set_value(widg->speed_z_nt, buffer[20]);
+
 	/* close the file */
-	fclose(fp);
+	if(filename != NULL)fclose(fp);
 	gtk_widget_hide(open_window);
 	g_free(filename);
+    g_free(name);
 }
 
 void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer window)
@@ -796,6 +845,16 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
     spin_pitch_trim = f_2_i8(pitch_trim_val);
     spin_roll_trim = f_2_i8(roll_trim_val);
 
+    spin_speed_x_p = gtk_spin_button_get_value(widg->speed_x_p);
+    spin_speed_x_i = gtk_spin_button_get_value(widg->speed_x_i);
+    spin_speed_x_d = gtk_spin_button_get_value(widg->speed_x_d);
+    spin_speed_y_p = gtk_spin_button_get_value(widg->speed_y_p);
+    spin_speed_y_i = gtk_spin_button_get_value(widg->speed_y_i);
+    spin_speed_y_d = gtk_spin_button_get_value(widg->speed_y_d);
+    spin_speed_z_p = gtk_spin_button_get_value(widg->speed_z_p);
+    spin_speed_z_i = gtk_spin_button_get_value(widg->speed_z_i);
+    spin_speed_z_nt = gtk_spin_button_get_value(widg->speed_z_nt);
+
 	printf( "Saved----------------------\n");
 	printf( "spin x_p  %d\n", spin_x_p );
 	printf( "spin x_i  %d\n", spin_x_i );
@@ -812,6 +871,16 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
     printf( "spin_pitch_trim  %d\n", spin_pitch_trim );
 	printf( "spin_roll_trim  %d\n", spin_roll_trim );
 
+    printf( "spin_speed_x_p  int %d\n", spin_speed_x_p );
+    printf( "spin_speed_x_i  int %d\n", spin_speed_x_i );
+    printf( "spin_speed_x_d  int %d\n", spin_speed_x_d );
+    printf( "spin_speed_y_p  int %d\n", spin_speed_y_p );
+    printf( "spin_speed_y_i  int %d\n", spin_speed_y_i );
+    printf( "spin_speed_y_d  int %d\n", spin_speed_y_d );
+    printf( "spin_speed_z_p  int %d\n", spin_speed_z_p );
+    printf( "spin_speed_z_i  int %d\n", spin_speed_z_i );
+    printf( "spin_speed_z_nt  int %d\n", spin_speed_z_nt);
+
 	FILE *fp;
 
 	/* open the file */
@@ -819,7 +888,13 @@ void on_save_gain_button_clicked(GtkButton *button, Widgets *widg, gpointer wind
 	if (fp == NULL)
 		printf("I couldn't open results.dat for appending.\n");
 
-	uint8_t str[12] = { spin_x_p, spin_x_i, spin_x_d, spin_y_p, spin_y_i, spin_y_d, spin_z_p, spin_z_i, spin_x_p_o, spin_y_p_o, spin_pitch_trim, spin_roll_trim };
+	uint8_t str[21] = { spin_x_p, spin_x_i, spin_x_d, spin_y_p,
+                        spin_y_i, spin_y_d, spin_z_p, spin_z_i,
+                        spin_x_p_o, spin_y_p_o,
+                         spin_pitch_trim, spin_roll_trim,
+                        spin_speed_x_p,spin_speed_x_i,spin_speed_x_d,
+                        spin_speed_y_p,spin_speed_y_i,spin_speed_y_d,
+                        spin_speed_z_p,spin_speed_z_i,spin_speed_z_nt};
 
 	/* write to the file */
 	//fprintf(fp, "------5-------------------------------------------------------\n");

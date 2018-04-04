@@ -76,6 +76,7 @@ uint8_t spin_speed_y_i = 0;
 uint8_t spin_speed_y_d = 0;
 uint8_t spin_speed_z_p = 0;
 uint8_t spin_speed_z_i = 0;
+uint8_t spin_speed_z_d = 0;
 uint8_t spin_speed_z_nt = 0;
 
 char send_gain = 0;
@@ -273,16 +274,27 @@ gboolean time_handler(Widgets *widg)
 		message[14] = spin_pitch_trim;
 		message[15] = spin_roll_trim;
 
-		for (i = 4; i < 16; i++)
+        message[16] = spin_speed_x_p;
+        message[17] = spin_speed_x_i;
+        message[18] = spin_speed_x_d;
+        message[19] = spin_speed_y_p;
+        message[20] = spin_speed_y_i;
+        message[21] = spin_speed_y_d;
+        message[22] = spin_speed_z_p;
+        message[23] = spin_speed_z_i;
+        message[24] = spin_speed_z_d;
+        message[25] = spin_speed_z_nt;
+
+		for (i = 4; i < 26; i++)
 			chk_sum += message[i];
 
-		message[16] = chk_sum & 0xFF;
-		message[17] = chk_sum >> 8;
+		message[26] = chk_sum & 0xFF;
+		message[27] = chk_sum >> 8;
 
 		send_gain = 0;
 
 		/* send message */
-		if (sendto(s, message, 18, 0, (struct sockaddr*)&server, len) == -1) {
+		if (sendto(s, message, 28, 0, (struct sockaddr*)&server, len) == -1) {
 			perror("sendto()");
 			return -1;
 		}
@@ -356,13 +368,19 @@ gboolean time_handler(Widgets *widg)
 	if (gain_read_back == 1) {
 		if (server_reply[0] == spin_x_p && server_reply[1] == spin_x_i && server_reply[2] == spin_x_d && server_reply[3] == spin_y_p
 		    && server_reply[4] == spin_y_i && server_reply[5] == spin_y_d && server_reply[6] == spin_z_p && server_reply[7] == spin_z_i
-		    && server_reply[8] == spin_x_p_o && server_reply[9] == spin_y_p_o && server_reply[10] == spin_pitch_trim && server_reply[11] == spin_roll_trim) {
+		    && server_reply[8] == spin_x_p_o && server_reply[9] == spin_y_p_o && server_reply[10] == spin_pitch_trim && server_reply[11] == spin_roll_trim
+            && server_reply[12] == spin_speed_x_p && server_reply[13] == spin_speed_x_i && server_reply[14] == spin_speed_x_d
+            && server_reply[15] == spin_speed_y_p && server_reply[16] == spin_speed_y_i && server_reply[17] == spin_speed_y_d
+            && server_reply[18] == spin_speed_z_p && server_reply[19] == spin_speed_z_i && server_reply[20] == spin_speed_z_d
+            && server_reply[21] == spin_speed_z_nt ) {
 			gtk_label_set_label(widg->l16, "read back OK");
 			gain_read_back = 0;
 		}
 
-		printf("x_p: %d x_i: %d x_d: %d y_p: %d y_i: %d y_d: %d z_p: %d z_i: %d x_p_o: %d y_p_o: %d  trim_pitch: %d trim_roll: %d\n", server_reply[0], server_reply[1], server_reply[2],
-		       server_reply[3], server_reply[4], server_reply[5], server_reply[6], server_reply[7], server_reply[8], server_reply[9],server_reply[10], server_reply[11]);
+		printf("x_p: %d x_i: %d x_d: %d y_p: %d y_i: %d y_d: %d z_p: %d z_i: %d x_p_o: %d y_p_o: %d  trim_pitch: %d trim_roll: %d spin_speed_x_p: %d spin_speed_x_i: %d spin_speed_x_d: %d spin_speed_y_p: %d spin_speed_y_i: %d spin_speed_y_d: %d spin_speed_z_p: %d spin_speed_z_i: %d spin_speed_z_d: %d spin_speed_z_nt: %d\n",
+               server_reply[0], server_reply[1], server_reply[2],
+		       server_reply[3], server_reply[4], server_reply[5], server_reply[6], server_reply[7], server_reply[8], server_reply[9],server_reply[10], server_reply[11],
+               server_reply[12], server_reply[13], server_reply[14], server_reply[15], server_reply[16], server_reply[17], server_reply[18],server_reply[19], server_reply[20], server_reply[21]);
 
 		wait_count += 1;
 		if (wait_count > 5) {
